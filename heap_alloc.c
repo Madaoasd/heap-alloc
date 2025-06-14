@@ -1,3 +1,4 @@
+
 //
 // Created by Quantum on 25-4-13.
 //
@@ -160,6 +161,9 @@ int heap_init(heap_t* heap, void* heap_mem, int size)
 
     heap->heap_mem = heap_mem;
     heap->size = size - overhead;
+    heap->mem_remained = heap->size;
+    heap->max_used = heap->max_used > (heap->size - heap->mem_remained) ?
+                     heap->max_used : (heap->size - heap->mem_remained);
 
     init_region->used = 0;
     init_region->size = ((size - overhead) >> 1);
@@ -254,38 +258,59 @@ void* heap_alloc(heap_t* heap, size_t size)
     remove_node(heap->heap_mem, &(heap->heads[head]), find);
     find->next = 0;
     find->prev = 0;
+
+    heap->mem_remained -= overhead + size;
+    heap->max_used = heap->max_used > (heap->size - heap->mem_remained) ?
+                     heap->max_used : (heap->size - heap->mem_remained);
     return &(find->next);
 }
 
-int check_tail(void *heap_mem, node_t* node)
+int check_tail(heap_t *heap, node_t* node)
 {
     tail_t *tail = get_tail(node);
-    if (tail->mem_start != GET_INDEX_ADDR(heap_mem, node))
+    if (tail->mem_start != GET_INDEX_ADDR(heap->heap_mem, node))
+    {
+        return 1;
+    }
+
+    return 0;
+}
+
+int check_node_ptr_range(heap_t* heap, void* node)
+{
+    uint8_t *p = (uint8_t*)node;
+    uint8_t *start = (uint8_t*)heap->heap_mem;
+    uint8_t *end = start + heap->size;
+
+    if (p >= start && p < end)
     {
         return 0;
     }
-
-    return 1;
+    else
+    {
+        return 1;
+    }
 }
 
-int check_node_ptr_range(heap_t* heap, node_t* node)
-{
-    void *p = (node_t*)node;
-    void *start = heap->heap_mem;
-    void *end = start + heap->size;
-
-    return (p >= start && p < end);
-}
-
-void heap_free(heap_t* heap, void* p)
+int heap_free(heap_t* heap, void* p)
 {
     const uint8_t offset = (uint8_t*)(&((node_t*)0)->next) - (uint8_t*)0;
+
+    if ((p == NULL)
+        || (check_node_ptr_range(heap, p) != 0))
+    {
+        return 1;
+    }
     node_t *cur_node = (node_t*)((uint8_t*)p - offset);
 
-    if ((p == NULL) || (check_tail(heap->heap_mem, cur_node) == 0))
+    if (check_tail(heap, cur_node) != 0)
     {
-        return;
+        return 1;
     }
+
+    heap->mem_remained += overhead + (cur_node->size << 1);
+    heap->max_used = heap->max_used > (heap->size - heap->mem_remained) ?
+                     heap->max_used : (heap->size - heap->mem_remained);
 
     uint16_t head_index_addr = GET_INDEX_ADDR(heap->heap_mem, cur_node);
     uint16_t prev_index_addr, next_index_addr;
@@ -337,7 +362,10 @@ void heap_free(heap_t* heap, void* p)
     }
 
     cur_node->used = 0;
+
     add_node(heap->heap_mem, &(heap->heads[get_head_index(cur_node->size << 1)]), cur_node);
+
+    return 0;
 }
 
 void list_show(void *heap_mem, uint16_t head)

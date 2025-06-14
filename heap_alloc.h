@@ -1,3 +1,4 @@
+
 //
 // Created by Quantum on 25-4-13.
 //
@@ -13,13 +14,13 @@
 #define HEAD_NUM (9)
 
 #define GET_INDEX_ADDR(HEAP_PTR, NODE_PTR)                                     \
-  ((uint8_t *)NODE_PTR - (uint8_t *)HEAP_PTR)
+((uint8_t *)NODE_PTR - (uint8_t *)HEAP_PTR)
 
 #define GET_NODE_PTR(HEAP_PTR, INDEX_ADDR)                                     \
-  ((node_t *)((uint8_t *)HEAP_PTR + INDEX_ADDR))
+((node_t *)((uint8_t *)HEAP_PTR + INDEX_ADDR))
 
 #define UP_ALIGN(ALIGN_NUM, NUM)                                               \
-  ((((NUM) + ((ALIGN_NUM) - 1)) / (ALIGN_NUM)) * (ALIGN_NUM))
+((((NUM) + ((ALIGN_NUM) - 1)) / (ALIGN_NUM)) * (ALIGN_NUM))
 
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
@@ -43,10 +44,19 @@ typedef struct heap_t
     void* heap_mem;             /*!< 堆维护的内存区起始地址 */
     uint16_t size;              /*!< 维护的内存区大小 */
     uint16_t heads[9];          /*!< 9个层级链表，管理不同大小范围的内存节点 */
+    uint16_t mem_remained;
+    uint16_t max_used;
 } heap_t;
+
+#define HEAP_FREE_SEC(heap, ptr) \
+do{\
+heap_free(heap, ptr);\
+ptr = (void*)0;\
+}while(0)
 
 int heap_init(heap_t* heap, void* heap_mem, int size);
 void *heap_alloc(heap_t* heap, size_t size);
-void heap_free(heap_t* heap, void* ptr);
+// void *heap_alloc_nofree(heap_t *heap, size_t size);
+int heap_free(heap_t* heap, void* ptr);
 void heap_debug(heap_t* heap);
 #endif //HEAP_ALLOC_H
