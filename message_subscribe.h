@@ -28,8 +28,6 @@ struct Msg
     uint8_t ref_count;                  /*!< 被引用数 */
     uint8_t usr_create_flag;            /*!< 被用户创建的消息 */
     const char *msg_name;               /*!< 消息名称 */
-    void *msg_content;                  /*!< 消息内容 */
-    int content_len;                    /*!< 内容长度 */
 };
 
 /**
@@ -84,10 +82,8 @@ void msg_destroy(void);
  * 发布消息: 消息由总线创建
  * @param msg_bus
  * @param msg_name
- * @param msg_content
- * @param content_len
  */
-int msg_creat_post(MsgBus* msg_bus, const char* msg_name, void* msg_content, int content_len);
+int msg_creat_post(MsgBus* msg_bus, const char* msg_name);
 
 /**
  * 发布消息: 消息由用户创建

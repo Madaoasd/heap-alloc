@@ -9,6 +9,7 @@ add_executable(
         heap_alloc.c
         message_subscribe.c
         SingleLinkList.c
+        timer.c
 )
 
 add_executable(

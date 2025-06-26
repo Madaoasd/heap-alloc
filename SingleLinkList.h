@@ -15,7 +15,7 @@ typedef struct SingleLinkList
 
 typedef SingleLinkList* SingleLinkListHead;
 
-int single_link_node_init(SingleLinkList* node, const void* data);
+int single_link_node_init(SingleLinkList* node, void *data);
 int single_link_list_add_tail(SingleLinkListHead* head, SingleLinkList* node);
 int single_link_list_add_head(SingleLinkListHead* head, SingleLinkList* node);
 SingleLinkList* single_link_list_fetch_head(SingleLinkListHead* head);
@@ -24,5 +24,8 @@ SingleLinkList* single_link_list_find_str(SingleLinkListHead* head, const char* 
 
 struct MsgObject;
 SingleLinkList* single_link_list_find_msg_obj(SingleLinkListHead* head, struct MsgObject* obj);
+
+struct TimeMsg;
+SingleLinkList *single_link_list_find_time_msg(SingleLinkListHead* head, struct TimeMsg* msg);
 
 #endif //LIST_H

@@ -192,17 +192,13 @@ void msg_destroy(void)
     {
         if (g_msg_destroy_pool.msgs_to_free[i] != NULL)
         {
-            if (g_msg_destroy_pool.msgs_to_free[i]->msg_content != NULL)
-            {
-                MSG_FREE(g_msg_destroy_pool.msgs_to_free[i]->msg_content);
-            }
             MSG_FREE(g_msg_destroy_pool.msgs_to_free[i]);
             g_msg_destroy_pool.msgs_to_free[i] = NULL;
         }
     }
 }
 
-int msg_creat_post(MsgBus* msg_bus, const char* msg_name, void* msg_content, int content_len)
+int msg_creat_post(MsgBus* msg_bus, const char* msg_name)
 {
     SingleLinkList *obj_node = NULL;
     uint8_t ref_count = 0;
@@ -239,24 +235,7 @@ int msg_creat_post(MsgBus* msg_bus, const char* msg_name, void* msg_content, int
         return -1;
     }
 
-    msg->content_len = content_len;
     msg->msg_name = msg_name;
-
-    if (content_len > 0)
-    {
-        void* p = MSG_MALLOC(content_len);
-        if (p == NULL)
-        {
-            MSG_FREE(msg);
-            return -1;
-        }
-        memcpy(p, msg_content, content_len);
-        msg->msg_content = p;
-    }
-    else
-    {
-        msg->msg_content = (void*)0;
-    }
 
     ref_count = 0;
 

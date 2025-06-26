@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 
-int single_link_node_init(SingleLinkList *node, const void* data)
+int single_link_node_init(SingleLinkList *node, void *data)
 {
     node->data = data;
     node->next = (void*)0;
@@ -124,6 +124,22 @@ SingleLinkList* single_link_list_find_msg_obj(SingleLinkListHead* head, struct M
     {
         if (temp_node->data != (void*)0
             && (struct MsgObject*)temp_node->data == obj)
+        {
+            return temp_node;
+        }
+        temp_node = temp_node->next;
+    }
+
+    return (void*)0;
+}
+
+SingleLinkList * single_link_list_find_time_msg(SingleLinkListHead*head, struct TimeMsg *msg) {
+    SingleLinkList* temp_node = *head;
+
+    while (temp_node != (void*)0)
+    {
+        if (temp_node->data != (void*)0
+            && (struct TimeMsg*)temp_node->data == msg)
         {
             return temp_node;
         }

@@ -5,6 +5,7 @@
 
 #include "heap_alloc.h"
 #include "message_subscribe.h"
+#include "timer.h"
 
 uint8_t heap_mem[5 * 1024];
 heap_t heap;
@@ -31,6 +32,9 @@ MsgObject b;
 MsgObject c;
 MsgObject d;
 
+TimeMsg ta;
+TimeMsg td;
+
 void a_loop(void);
 void b_loop(void);
 void c_loop(void);
@@ -49,7 +53,8 @@ int main(void)
     msg_obj_init(&d);
 
     msg_obj_subscribe(&msg_bus, &a, "eat");
-    msg_obj_subscribe(&msg_bus, &a, "time");
+    timer_msg_init(&ta, "time_a_1", &a, 2, 1);
+    timer_msg_enable(&ta);
 
     msg_obj_subscribe(&msg_bus, &b, "sleep");
 
@@ -57,7 +62,8 @@ int main(void)
 
     msg_obj_subscribe(&msg_bus, &d, "drink coffee");
     msg_obj_subscribe(&msg_bus, &d, "work");
-    msg_obj_subscribe(&msg_bus, &d, "time");
+    timer_msg_init(&td, "time_d_1", &a, 3, 1);
+    timer_msg_enable(&td);
 
     printf("heap max used: %d\n", heap.max_used);
 
@@ -69,6 +75,7 @@ int main(void)
         c_loop();
         d_loop();
         msg_destroy();
+        timer_thread_handle();
     }
 
     return 0;
@@ -81,7 +88,7 @@ void time_tick(void)
     if (((clock() - last)/CLOCKS_PER_SEC) > 0)
     {
         last = clock();
-        printf("send time :%d\n", msg_creat_post(&msg_bus, "time", NULL, 0));
+        timer_interrupt_handle();
         printf("heap max used: %d\n", heap.max_used);
         printf("heap remained: %d\n", heap.mem_remained);
     }
@@ -95,20 +102,20 @@ void a_loop(void)
     while (msg != NULL)
     {
         printf("a get msg: %s\n", msg->msg_name);
-        if (strcmp(msg->msg_name, "time") == 0)
+        if (strcmp(msg->msg_name, "time_a_1") == 0)
         {
             if (num != 0)
             {
-                printf( "a send sleep:%d \n",msg_creat_post(&msg_bus, "sleep", NULL, 0));
+                printf( "a send sleep:%d \n",msg_creat_post(&msg_bus, "sleep"));
                 num = (num + 1) % 2;
             }
             else
             {
                 num = (num + 1) % 2;
-                printf( "a send work:%d \n",msg_creat_post(&msg_bus, "work", NULL, 0));
-                printf( "a send work:%d \n",msg_creat_post(&msg_bus, "work", NULL, 0));
-                printf( "a send work:%d \n",msg_creat_post(&msg_bus, "work", NULL, 0));
-                printf( "a send work:%d \n",msg_creat_post(&msg_bus, "work", NULL, 0));
+                printf( "a send work:%d \n",msg_creat_post(&msg_bus, "work"));
+                printf( "a send work:%d \n",msg_creat_post(&msg_bus, "work"));
+                printf( "a send work:%d \n",msg_creat_post(&msg_bus, "work"));
+                printf( "a send work:%d \n",msg_creat_post(&msg_bus, "work"));
             }
         }
         msg = msg_obj_fetch_msg(&a);
@@ -134,11 +141,11 @@ void c_loop(void)
     {
         printf("c get msg: %s\n", msg->msg_name);
         msg = msg_obj_fetch_msg(&c);
-        printf("c send eat: %d\n", msg_creat_post(&msg_bus, "eat", NULL, 0));
+        printf("c send eat: %d\n", msg_creat_post(&msg_bus, "eat"));
         work_times = (work_times + 1) % 3;
         if (work_times == 2)
         {
-            printf("c send drink coffee: %d\n", msg_creat_post(&msg_bus, "drink coffee", NULL, 0));
+            printf("c send drink coffee: %d\n", msg_creat_post(&msg_bus, "drink coffee"));
         }
     }
 }
@@ -149,7 +156,7 @@ void d_loop(void)
     while (msg != NULL)
     {
         printf("d get msg: %s\n", msg->msg_name);
-        if (strcmp(msg->msg_name, "time") == 0) {
+        if (strcmp(msg->msg_name, "time_d_1") == 0) {
             printf("\n\nI'm d and I get time message\n");
         }
         msg = msg_obj_fetch_msg(&d);
