@@ -3,7 +3,7 @@
 // Created by Administrator on 25-4-17.
 //
 
-#include "message_subscribe.h"
+#include "subscribe_msg.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -18,9 +18,10 @@ static struct MsgDestroyPool g_msg_destroy_pool = {0};
 #define DIM_OF(array) (sizeof(array) / sizeof(array[0]))
 
 void* MSG_MALLOC(size_t size) __attribute__((weak));
+void* MSG_MALLOC_NOFREE(size_t size) __attribute__((weak));
 void MSG_FREE(void* ptr) __attribute__((weak));
 
-int msg_bus_init(MsgBus* msg_bus)
+int msg_bus_init(SubscribeBus* msg_bus)
 {
     msg_bus->msg_obj_list = (void*)0;
 
@@ -50,7 +51,7 @@ int msg_obj_bind_name(MsgObject* msg_obj, const char* msg_name)
         return 0;
     }
 
-    node = MSG_MALLOC(sizeof(SingleLinkList));
+    node = MSG_MALLOC_NOFREE(sizeof(SingleLinkList));
 
     if (node == NULL)
     {
@@ -97,7 +98,7 @@ int msg_obj_bind_msg(MsgObject* msg_obj, Msg* msg)
     return -1;
 }
 
-int msg_obj_subscribe(MsgBus* msg_bus, MsgObject* msg_obj, const char* msg_name)
+int msg_obj_subscribe(SubscribeBus* msg_bus, MsgObject* msg_obj, const char* msg_name)
 {
     SingleLinkList *obj_node = single_link_list_find_msg_obj(&msg_bus->msg_obj_list, msg_obj);
 
@@ -106,7 +107,7 @@ int msg_obj_subscribe(MsgBus* msg_bus, MsgObject* msg_obj, const char* msg_name)
         return msg_obj_bind_name(msg_obj, msg_name);
     }
 
-    obj_node = MSG_MALLOC(sizeof(SingleLinkList));
+    obj_node = MSG_MALLOC_NOFREE(sizeof(SingleLinkList));
 
     if (obj_node == NULL)
     {
@@ -198,7 +199,7 @@ void msg_destroy(void)
     }
 }
 
-int msg_creat_post(MsgBus* msg_bus, const char* msg_name)
+int msg_creat_post(SubscribeBus* msg_bus, const char* msg_name)
 {
     SingleLinkList *obj_node = NULL;
     uint8_t ref_count = 0;
@@ -255,7 +256,7 @@ int msg_creat_post(MsgBus* msg_bus, const char* msg_name)
     return 0;
 }
 
-int msg_post(MsgBus* msg_bus, Msg* msg)
+int msg_post(SubscribeBus* msg_bus, Msg* msg)
 {
     msg->usr_create_flag = 1;
     msg->ref_count = 0;

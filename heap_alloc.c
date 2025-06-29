@@ -160,10 +160,11 @@ int heap_init(heap_t* heap, void* heap_mem, int size)
     }
 
     heap->heap_mem = heap_mem;
-    heap->size = size - overhead;
-    heap->mem_remained = heap->size;
-    heap->max_used = heap->max_used > (heap->size - heap->mem_remained) ?
-                     heap->max_used : (heap->size - heap->mem_remained);
+    heap->origin_size = size;
+    heap->real_size = size;
+    heap->mem_remained = heap->origin_size;
+    heap->max_used = heap->max_used > (heap->origin_size - heap->mem_remained) ?
+                     heap->max_used : (heap->origin_size - heap->mem_remained);
 
     init_region->used = 0;
     init_region->size = ((size - overhead) >> 1);
@@ -260,9 +261,63 @@ void* heap_alloc(heap_t* heap, size_t size)
     find->prev = 0;
 
     heap->mem_remained -= overhead + size;
-    heap->max_used = heap->max_used > (heap->size - heap->mem_remained) ?
-                     heap->max_used : (heap->size - heap->mem_remained);
+    heap->max_used = heap->max_used > (heap->origin_size - heap->mem_remained) ?
+                     heap->max_used : (heap->origin_size - heap->mem_remained);
     return &(find->next);
+}
+
+void* heap_alloc_nofree(heap_t* heap, size_t size)
+{
+    void *ret;
+
+    tail_t *tail = (tail_t*)(heap->heap_mem + heap->real_size - sizeof(tail_t));
+
+    node_t *p_node = GET_NODE_PTR(heap->heap_mem, tail->mem_start);
+
+    uint16_t old_head = get_head_index(p_node->size * 2);
+
+    size = UP_ALIGN(size, MIN_SIZE);
+
+    /* 若尾部的内存结点过小或尾部结点已被占用，则直接返回 */
+    if (((p_node->size * 2) + overhead) < size
+        || p_node->used == 1)
+    {
+        return NULL;
+    }
+
+    if ((p_node->size * 2) < (MIN_SIZE + size))
+    {
+        remove_node(heap->heap_mem, &(heap->heads[old_head]), p_node);
+
+        heap->real_size -= p_node->size * 2 + overhead;
+        heap->mem_remained -= p_node->size * 2 + overhead;
+        heap->max_used = heap->max_used > (heap->origin_size - heap->mem_remained) ?
+                         heap->max_used : (heap->origin_size - heap->mem_remained);
+
+        return (void*)p_node;
+    }
+
+    p_node->size = ((p_node->size * 2) - size) / 2;
+
+    uint16_t new_head = get_head_index(p_node->size * 2);
+
+    set_tail(heap->heap_mem, p_node);
+
+    if (old_head != new_head)
+    {
+        remove_node(heap->heap_mem, &(heap->heads[old_head]), p_node);
+        add_node(heap->heap_mem, &(heap->heads[new_head]), p_node);
+    }
+
+    ret = (void*)(heap->heap_mem + heap->real_size - size);
+
+    heap->real_size -= size;
+
+    heap->mem_remained -= size;
+    heap->max_used = heap->max_used > (heap->origin_size - heap->mem_remained) ?
+                     heap->max_used : (heap->origin_size - heap->mem_remained);
+
+    return ret;
 }
 
 int check_tail(heap_t *heap, node_t* node)
@@ -280,7 +335,7 @@ int check_node_ptr_range(heap_t* heap, void* node)
 {
     uint8_t *p = (uint8_t*)node;
     uint8_t *start = (uint8_t*)heap->heap_mem;
-    uint8_t *end = start + heap->size;
+    uint8_t *end = start + heap->origin_size;
 
     if (p >= start && p < end)
     {
@@ -309,8 +364,8 @@ int heap_free(heap_t* heap, void* p)
     }
 
     heap->mem_remained += overhead + (cur_node->size << 1);
-    heap->max_used = heap->max_used > (heap->size - heap->mem_remained) ?
-                     heap->max_used : (heap->size - heap->mem_remained);
+    heap->max_used = heap->max_used > (heap->origin_size - heap->mem_remained) ?
+                     heap->max_used : (heap->origin_size - heap->mem_remained);
 
     uint16_t head_index_addr = GET_INDEX_ADDR(heap->heap_mem, cur_node);
     uint16_t prev_index_addr, next_index_addr;
@@ -327,7 +382,7 @@ int heap_free(heap_t* heap, void* p)
     }
 
     /* 这是最后一个内存块 */
-    if ((head_index_addr + overhead + (cur_node->size << 1)) >= heap->size)
+    if ((head_index_addr + overhead + (cur_node->size << 1)) >= heap->origin_size)
     {
         next_index_addr = 0xFFFF;
     }

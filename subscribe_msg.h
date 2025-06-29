@@ -7,11 +7,11 @@
 
 #include <stdint.h>
 #include "SingleLinkList.h"
-typedef struct MsgBus MsgBus;
+typedef struct SubscribeBus SubscribeBus;
 typedef struct MsgObject MsgObject;
 typedef struct Msg Msg;
 
-struct MsgBus
+struct SubscribeBus
 {
     SingleLinkListHead msg_obj_list;
 };
@@ -35,7 +35,7 @@ struct Msg
  * @param msg_bus
  * @return
  */
-int msg_bus_init(MsgBus* msg_bus);
+int msg_bus_init(SubscribeBus* msg_bus);
 
 /**
  * 消息对象初始化（将成员初始为0）
@@ -50,7 +50,7 @@ int msg_obj_init(MsgObject *msg_obj);
  * @param msg_name 消息名
  * @return
  */
-int msg_obj_subscribe(MsgBus *msg_bus, MsgObject *msg_obj, const char *msg_name);
+int msg_obj_subscribe(SubscribeBus *msg_bus, MsgObject *msg_obj, const char *msg_name);
 
 /**
  * 取出绑定到该消息对象的消息
@@ -83,7 +83,7 @@ void msg_destroy(void);
  * @param msg_bus
  * @param msg_name
  */
-int msg_creat_post(MsgBus* msg_bus, const char* msg_name);
+int msg_creat_post(SubscribeBus* msg_bus, const char* msg_name);
 
 /**
  * 发布消息: 消息由用户创建
@@ -91,7 +91,7 @@ int msg_creat_post(MsgBus* msg_bus, const char* msg_name);
  * @param msg
  * @return
  */
-int msg_post(MsgBus* msg_bus, Msg *msg);
+int msg_post(SubscribeBus* msg_bus, Msg *msg);
 
 /**
  *

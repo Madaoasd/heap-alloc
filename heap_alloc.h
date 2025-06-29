@@ -42,7 +42,8 @@ typedef struct tail_t
 typedef struct heap_t
 {
     void* heap_mem;             /*!< 堆维护的内存区起始地址 */
-    uint16_t size;              /*!< 维护的内存区大小 */
+    uint16_t origin_size;       /*!< 维护的内存区大小 */
+    uint16_t real_size;         /*!< 实际内存大小 */
     uint16_t heads[9];          /*!< 9个层级链表，管理不同大小范围的内存节点 */
     uint16_t mem_remained;
     uint16_t max_used;
@@ -56,7 +57,7 @@ ptr = (void*)0;\
 
 int heap_init(heap_t* heap, void* heap_mem, int size);
 void *heap_alloc(heap_t* heap, size_t size);
-// void *heap_alloc_nofree(heap_t *heap, size_t size);
+void *heap_alloc_nofree(heap_t *heap, size_t origin_size);
 int heap_free(heap_t* heap, void* ptr);
 void heap_debug(heap_t* heap);
 #endif //HEAP_ALLOC_H

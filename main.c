@@ -4,8 +4,8 @@
 #include <time.h>
 
 #include "heap_alloc.h"
-#include "message_subscribe.h"
-#include "timer.h"
+#include "subscribe_msg.h"
+#include "timer_msg.h"
 
 uint8_t heap_mem[5 * 1024];
 heap_t heap;
@@ -21,12 +21,21 @@ void *MSG_MALLOC(size_t size)
     return ptr;
 }
 
+void* MSG_MALLOC_NOFREE(size_t size) {
+    void *ptr = heap_alloc_nofree(&heap, size);
+    if (ptr == NULL)
+    {
+        heap_debug(&heap);
+    }
+    return ptr;
+}
+
 void MSG_FREE(void *ptr)
 {
     heap_free(&heap, ptr);
 }
 
-MsgBus msg_bus;
+SubscribeBus msg_bus;
 MsgObject a;
 MsgObject b;
 MsgObject c;
