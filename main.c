@@ -71,7 +71,7 @@ int main(void)
 
     msg_obj_subscribe(&msg_bus, &d, "drink coffee");
     msg_obj_subscribe(&msg_bus, &d, "work");
-    timer_msg_init(&td, "time_d_1", &a, 3, 1);
+    timer_msg_init(&td, "time_d_1", &d, 3, 1);
     timer_msg_enable(&td);
 
     printf("heap max used: %d\n", heap.max_used);

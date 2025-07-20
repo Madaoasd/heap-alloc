@@ -34,6 +34,9 @@ void timer_msg_init(TimeMsg *time_msg,
 int timer_msg_enable(TimeMsg *time_msg)
 {
     SingleLinkList *time_node = MSG_MALLOC(sizeof(SingleLinkList));
+
+    timer_msg_disable(time_msg);
+
     if (time_node == NULL) {
         return -1;
     }
@@ -53,6 +56,8 @@ int timer_msg_disable(TimeMsg *time_msg)
     if (time_node != NULL) {
         single_link_list_del(&time_bus.msg_obj_list, time_node);
     }
+
+    MSG_FREE(time_node);
 
     return 0;
 }
@@ -79,6 +84,13 @@ int timer_thread_handle()
         if (time_msg->time_remained <= diff) {
             msg_post_to_obj(&time_msg->msg, time_msg->msg_rev);
             time_msg->time_remained = time_msg->time_interval;
+            if (!time_msg->loop_flag) {
+                SingleLinkList *temp = time_node;
+                time_node = time_node->next;
+                single_link_list_del(&time_bus.msg_obj_list, temp);
+                MSG_FREE(temp);
+                continue;
+            }
         }
         else {
             time_msg->time_remained -= diff;
